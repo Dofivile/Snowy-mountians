@@ -69,6 +69,24 @@ export const useAudioAnalyser = ({
     freqData.current = new Uint8Array(analyser.frequencyBinCount);
     timeData.current = new Uint8Array(analyser.fftSize);
     bandEdges.current = buildBandRanges(analyser.frequencyBinCount, ctx.sampleRate);
+
+    const resumeOnGesture = () => {
+      if (ctx.state === "suspended") {
+        ctx.resume().catch(() => {});
+      }
+      document.removeEventListener("click", resumeOnGesture);
+      document.removeEventListener("keydown", resumeOnGesture);
+      document.removeEventListener("touchstart", resumeOnGesture);
+    };
+
+    ctx.addEventListener("statechange", () => {
+      if (ctx.state === "suspended") {
+        document.addEventListener("click", resumeOnGesture);
+        document.addEventListener("keydown", resumeOnGesture);
+        document.addEventListener("touchstart", resumeOnGesture);
+      }
+    });
+
     return ctx;
   }, []);
 
@@ -151,11 +169,6 @@ export const useAudioAnalyser = ({
   }, [stopCurrent]);
 
   useFrame(() => {
-    const ctx = ctxRef.current;
-    if (ctx && ctx.state === "suspended") {
-      ctx.resume().catch(() => {});
-    }
-
     if (!activeRef.current || !analyserRef.current) return;
     const analyser = analyserRef.current;
     const freq = freqData.current;
