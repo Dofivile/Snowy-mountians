@@ -72,11 +72,15 @@ export const useAudioAnalyser = ({
     return ctx;
   }, []);
 
-  const stopCurrent = useCallback(() => {
+  const disconnectSource = useCallback(() => {
     if (sourceRef.current) {
       sourceRef.current.disconnect();
       sourceRef.current = null;
     }
+  }, []);
+
+  const stopCurrent = useCallback(() => {
+    disconnectSource();
     if (streamRef.current) {
       streamRef.current.getTracks().forEach((t) => t.stop());
       streamRef.current = null;
@@ -87,19 +91,33 @@ export const useAudioAnalyser = ({
       audioElRef.current = null;
     }
     activeRef.current = false;
-  }, []);
+  }, [disconnectSource]);
 
   const startMic = useCallback(async () => {
-    stopCurrent();
+    disconnectSource();
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach((t) => t.stop());
+      streamRef.current = null;
+    }
+    activeRef.current = false;
+
     const ctx = ensureContext();
     if (ctx.state === "suspended") await ctx.resume();
+
     const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
     streamRef.current = stream;
+
     const source = ctx.createMediaStreamSource(stream);
     source.connect(analyserRef.current);
     sourceRef.current = source;
     activeRef.current = true;
-  }, [ensureContext, stopCurrent]);
+
+    stream.getTracks().forEach((track) => {
+      track.addEventListener("ended", () => {
+        activeRef.current = false;
+      });
+    });
+  }, [ensureContext, disconnectSource]);
 
   const startFile = useCallback(
     async (file) => {
@@ -126,49 +144,18 @@ export const useAudioAnalyser = ({
   }, [stopCurrent]);
 
   useEffect(() => {
-    let cancelled = false;
-
-    const removeListeners = () => {
-      document.removeEventListener("click", resumeOnGesture);
-      document.removeEventListener("keydown", resumeOnGesture);
-      document.removeEventListener("touchstart", resumeOnGesture);
-    };
-
-    const tryActivateMic = async () => {
-      if (cancelled || activeRef.current) return;
-      const ctx = ctxRef.current;
-      if (ctx && ctx.state === "suspended") {
-        await ctx.resume();
-      }
-      await startMic();
-    };
-
-    const resumeOnGesture = async () => {
-      if (cancelled || activeRef.current) {
-        if (activeRef.current) removeListeners();
-        return;
-      }
-      try {
-        await tryActivateMic();
-        removeListeners();
-      } catch (_) {}
-    };
-
-    tryActivateMic().catch(() => {});
-
-    document.addEventListener("click", resumeOnGesture);
-    document.addEventListener("keydown", resumeOnGesture);
-    document.addEventListener("touchstart", resumeOnGesture);
-
     return () => {
-      cancelled = true;
-      removeListeners();
       stopCurrent();
       if (ctxRef.current) ctxRef.current.close();
     };
-  }, [startMic, stopCurrent]);
+  }, [stopCurrent]);
 
   useFrame(() => {
+    const ctx = ctxRef.current;
+    if (ctx && ctx.state === "suspended") {
+      ctx.resume().catch(() => {});
+    }
+
     if (!activeRef.current || !analyserRef.current) return;
     const analyser = analyserRef.current;
     const freq = freqData.current;

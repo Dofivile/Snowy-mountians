@@ -1,4 +1,4 @@
-import React, { Suspense, useRef, useMemo } from "react";
+import React, { Suspense, useRef, useMemo, useCallback } from "react";
 import { Canvas, useFrame } from "@react-three/fiber";
 import * as THREE from "three";
 
@@ -40,8 +40,13 @@ const CyclingAmbient = () => {
   return <ambientLight ref={lightRef} intensity={0.8} />;
 };
 
-const AudioBridge = ({ quakeIntensity, freqBalance, sectionEnergies, palettePhase }) => {
-  useAudioAnalyser({ quakeIntensity, freqBalance, sectionEnergies, palettePhase });
+const AudioBridge = ({ quakeIntensity, freqBalance, sectionEnergies, palettePhase, onReady }) => {
+  const api = useAudioAnalyser({ quakeIntensity, freqBalance, sectionEnergies, palettePhase });
+  const stashed = useRef(false);
+  if (!stashed.current) {
+    stashed.current = true;
+    onReady(api);
+  }
   return null;
 };
 
@@ -50,11 +55,22 @@ export default function App() {
   const freqBalance = useRef(0);
   const sectionEnergies = useRef(new Float32Array(SECTION_COUNT));
   const palettePhase = useRef(0);
+  const audioApi = useRef(null);
+
+  const handleAudioReady = useCallback((api) => {
+    audioApi.current = api;
+  }, []);
+
+  const handleCanvasClick = useCallback(() => {
+    if (audioApi.current && !audioApi.current.activeRef.current) {
+      audioApi.current.startMic().catch(() => {});
+    }
+  }, []);
 
   return (
     <div className="vis-shell">
       <div className="vis-box">
-        <div className="vis-screen">
+        <div className="vis-screen" onClick={handleCanvasClick}>
           <Canvas
             camera={{
               position: [40, 10, 18],
@@ -66,6 +82,7 @@ export default function App() {
               freqBalance={freqBalance}
               sectionEnergies={sectionEnergies}
               palettePhase={palettePhase}
+              onReady={handleAudioReady}
             />
             <DynamicSky intensity={quakeIntensity} />
             <CameraSetup />
@@ -84,7 +101,7 @@ export default function App() {
         </div>
 
         <div className="audio-controls">
-          <span className="vis-tagline">speak to disturb mother nature</span>
+          <span className="vis-tagline">click anywhere and let your voice move the mountains</span>
         </div>
       </div>
     </div>
