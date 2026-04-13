@@ -15,32 +15,135 @@ body,
 }
 
 body {
-  background: #000;
+  background: #e8ecf1;
 }
 
 canvas {
   display: block;
 }
 
-#root > div {
+.vis-shell {
   width: 100%;
   height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
 }
 
-.blog-link {
-  position: absolute;
-  bottom: 1rem;
-  left: 1rem;
-  z-index: 10;
-  padding: 0.5rem 0.75rem;
-  border-radius: 4px;
-  font-family: system-ui, sans-serif;
-  font-size: 0.875rem;
-  color: #fff;
-  text-decoration: none;
-  background: rgba(0, 0, 0, 0.45);
+.vis-box {
+  position: relative;
+  width: 100%;
+  max-width: 720px;
+  aspect-ratio: 7 / 5;
+  border-radius: 16px;
+  border: 1.5px solid rgba(255, 255, 255, 0.08);
+  background: #111118;
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.03),
+    0 2px 20px rgba(0, 0, 0, 0.6),
+    0 8px 60px rgba(0, 0, 0, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
 }
 
-.blog-link:hover {
-  background: rgba(0, 0, 0, 0.6);
+.vis-screen {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  border-radius: 14px 14px 0 0;
+  overflow: hidden;
+}
+
+.vis-screen canvas {
+  width: 100% !important;
+  height: 100% !important;
+}
+
+.audio-controls {
+  position: relative;
+  z-index: 20;
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  justify-content: center;
+  padding: 0.75rem 1rem;
+  background: rgba(0, 0, 0, 0.35);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.vis-tagline {
+  font-family: system-ui, -apple-system, sans-serif;
+  font-size: 0.7rem;
+  font-weight: 400;
+  letter-spacing: 0.08em;
+  text-transform: lowercase;
+  color: rgba(255, 255, 255, 0.4);
+  user-select: none;
+}
+
+.audio-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.45rem 0.85rem;
+  border: none;
+  border-radius: 9999px;
+  font-family: system-ui, -apple-system, sans-serif;
+  font-size: 0.78rem;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.85);
+  background: rgba(255, 255, 255, 0.06);
+  cursor: pointer;
+  transition: background 0.2s, transform 0.15s;
+  white-space: nowrap;
+  user-select: none;
+}
+
+.audio-btn:hover {
+  background: rgba(255, 255, 255, 0.12);
+  transform: scale(1.04);
+}
+
+.audio-btn.active {
+  background: rgba(220, 60, 60, 0.5);
+}
+
+.audio-btn.active:hover {
+  background: rgba(220, 60, 60, 0.65);
+}
+
+.file-label {
+  cursor: pointer;
+}
+
+.stop-btn {
+  padding: 0.45rem 0.6rem;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.stop-btn:hover {
+  background: rgba(180, 40, 40, 0.55);
+}
+
+@media (max-width: 640px) {
+  .vis-shell {
+    padding: 1rem;
+  }
+
+  .vis-box {
+    border-radius: 10px;
+  }
+
+  .vis-screen {
+    border-radius: 8px 8px 0 0;
+  }
+
+  .audio-controls {
+    padding: 0.6rem 0.75rem;
+  }
 }
